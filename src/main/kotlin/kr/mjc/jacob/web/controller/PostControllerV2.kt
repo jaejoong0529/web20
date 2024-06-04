@@ -1,7 +1,6 @@
 package kr.mjc.jacob.web.controller
 
 import jakarta.servlet.http.HttpSession
-import kr.mjc.jacob.web.generateRandomString
 import kr.mjc.jacob.web.repository.Post
 import kr.mjc.jacob.web.repository.PostRepository
 import kr.mjc.jacob.web.repository.User
@@ -13,7 +12,6 @@ import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.SessionAttribute
 import org.springframework.web.server.ResponseStatusException
 import java.time.LocalDateTime
@@ -38,19 +36,12 @@ class PostControllerV2(val postRepository: PostRepository) {
 
   /** 글쓰기 화면 */
   @GetMapping("/post/create")
-  fun create(session: HttpSession) {
-    val csrfToken = generateRandomString(32)
-    session.setAttribute("csrf", csrfToken)
-    log.debug("csrf token: $csrfToken")
+  fun create() {
   }
 
   /** 글쓰기 */
   @PostMapping("/post/create")
-  fun create(post: Post, @SessionAttribute("user") user: User,
-             @SessionAttribute("csrf") csrf: String?,
-             @RequestParam("_csrf") _csrf: String): String {
-    if (csrf != _csrf) throw ResponseStatusException(HttpStatus.BAD_REQUEST,
-                                                     "CSRF 에러")
+  fun create(post: Post, @SessionAttribute("user") user: User): String {
     post.apply {
       this.user = user
       pubDate = LocalDateTime.now()
@@ -97,7 +88,8 @@ class PostControllerV2(val postRepository: PostRepository) {
   private fun checkPost(id: Long, userId: Long): Post {
     val post = postRepository.findById(id).orElseThrow()
     if (userId != post.user.id) throw ResponseStatusException(
-        HttpStatus.UNAUTHORIZED, "권한이 없습니다.")  // 401
+      HttpStatus.UNAUTHORIZED, "권한이 없습니다."
+    )  // 401
     return post
   }
 }
